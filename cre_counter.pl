@@ -1,4 +1,6 @@
 #
+#/usr/bin/perl
+
 use strict;
 
 use JSON qw/to_json from_json/;
@@ -11,22 +13,22 @@ use LWP::UserAgent;
 use Data::Dumper;
 
 
-use LWP 5.64;
-  my $url = 'https://www.paypal.com/';   # Yes, HTTPS!
-  my $browser = LWP::UserAgent->new;
-  my $response = $browser->get($url);
-  die "Error at $url\n ", $response->status_line, "\n Aborting"
-   unless $response->is_success;
-  print "Whee, it worked!  I got that ",
-   $response->content_type, " document!\n";
+#use LWP 5.64;
+#  my $url = 'https://www.paypal.com/';   # Yes, HTTPS!
+#  my $browser = LWP::UserAgent->new;
+#  my $response = $browser->get($url);
+#  die "Error at $url\n ", $response->status_line, "\n Aborting"
+#   unless $response->is_success;
+#  print "Whee, it worked!  I got that ",
+#   $response->content_type, " document!\n";
 
-exit;
+#exit;
 
 # Авторизационный токен, полученный в сервисе oauth.yandex.ru
 my $token = 'AQAAAAAB0_56AAebVvAw9vwTuEy4rG-XARQprBw';
 
 # Логин учетной записи, данные о которой требуется получить
-my $login = 'kodim69';
+my $login = 'Kodim69';
 
 my $url = "https://api.direct.yandex.ru/v4/json/";
 
