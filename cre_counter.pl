@@ -1,6 +1,84 @@
 #
+use strict;
 
-print "Add Yandex.Metrika counter into *.htm \n" if !$ARGV[0];
+use JSON qw/to_json from_json/;
+use Encode qw/decode_utf8/;
+
+use HTTP::Request::Common;
+use HTTP::Response;
+use LWP::UserAgent;
+
+use Data::Dumper;
+
+
+use LWP 5.64;
+  my $url = 'https://www.paypal.com/';   # Yes, HTTPS!
+  my $browser = LWP::UserAgent->new;
+  my $response = $browser->get($url);
+  die "Error at $url\n ", $response->status_line, "\n Aborting"
+   unless $response->is_success;
+  print "Whee, it worked!  I got that ",
+   $response->content_type, " document!\n";
+
+exit;
+
+# Авторизационный токен, полученный в сервисе oauth.yandex.ru
+my $token = 'AQAAAAAB0_56AAebVvAw9vwTuEy4rG-XARQprBw';
+
+# Логин учетной записи, данные о которой требуется получить
+my $login = 'kodim69';
+
+my $url = "https://api.direct.yandex.ru/v4/json/";
+
+# Подготовка данных для запроса
+my $data = {};
+$data->{param} = [$login];
+$data->{method} = 'GetClientInfo';
+
+$data->{token} = $token;
+
+my $json_data = to_json($data);
+
+my $ua = new LWP::UserAgent( timeout => 60000 );
+
+my $request = HTTP::Request->new('POST', $url, undef, $json_data);
+
+# Запрос на сервер
+my $response = $ua->request($request);
+
+# for debug
+# warn $request->as_string, "\n";
+# warn $response->as_string, "\n";
+
+if ($response->is_success) {
+
+    my $result = from_json(Encode::decode_utf8($response->decoded_content())) || {};
+
+    if (defined $result->{error_code}) {
+
+        # Если ошибку вернул сервер API Яндекс.Директа
+        die join "\n"
+                    , "API error:"
+                    , "Code: ".$result->{error_code}
+                    , "Describe: ".$result->{error_str}
+                    , "Detail:".($result->{error_detail} || '');
+
+    } elsif (defined $result->{data}) {
+
+        print Dumper {result => $result};
+
+    }
+
+} else {
+
+    # Если ошибка произошла при отправке запроса
+    die "HTTP error: ".$response->status_line;
+
+}
+
+exit;
+
+print "Create&Add public Yandex.Metrika counter into *.htm \n" if !$ARGV[0];
 print "Usage: $0 <*.htm> \n" if !$ARGV[0];
 
 
@@ -27,7 +105,7 @@ style="width:88px; height:31px; border:0;" alt="Яндекс.Метрика" tit
 <!-- /Yandex.Metrika counter -->
 );
 
-my $yan_cnt_exist=0;
+
 
 my @fileNames=glob($ARGV[1]);
 
@@ -44,10 +122,11 @@ for(my $file_name_in=shift @fileNames)
 	my $file_name_out=$file_name_in.'.tmp';
 	open my $file_out, '>', $file_name_out or warn "Cannot open file $file_name_out: $!" and next;
         
+	my $yan_cnt_exists=0;
 	while(my $s=<$file_in>)
 	{
-		$yan_cnt_exists=1 if $s=~/Metrika/;
-		print $file_out $yan_cnt if $s=~/\/body/ and !$yan_cnt_exist;
+		$yan_cnt_exists=1 if $s=~/Metrika/s;
+		print $file_out $yan_cnt if $s=~/\/body>/s and !$yan_cnt_exists;
 		print $file_out $s;
 	}
 	close $file_in or warn "Cannot close $file_in" and next;
